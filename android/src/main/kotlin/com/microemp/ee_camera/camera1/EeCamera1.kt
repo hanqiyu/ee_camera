@@ -267,10 +267,7 @@ class EeCamera1 : EeCameraInterface {
 			// back-facing
 			result = (info.orientation - degrees + 360) % 360
 		}
-
-		println("info:${info.orientation}");
-		println("result:${result}");
-
+		
 		return result;
 	}
 

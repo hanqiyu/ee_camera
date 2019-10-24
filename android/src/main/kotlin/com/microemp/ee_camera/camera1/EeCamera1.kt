@@ -25,10 +25,10 @@ import java.io.FileOutputStream;
 
 import android.view.OrientationEventListener;
 import android.view.OrientationEventListener.ORIENTATION_UNKNOWN
-import io.flutter.plugin.common.MethodChannel
+import com.microemp.ee_camera.EeCameraInterface
 
 
-class EeCamera1 {
+class EeCamera1 : EeCameraInterface {
 	var view: FlutterView? = null
 	var activity: Activity? = null
 	var registrar: Registrar? = null
@@ -52,6 +52,8 @@ class EeCamera1 {
 
 	var enableAudio: Boolean = false
 
+	var flutterTexture: TextureRegistry.SurfaceTextureEntry?= null
+
 
 	val sizeTypes:Map<String, Int> = mapOf(
 			"max" to -1, // 2160p
@@ -70,7 +72,7 @@ class EeCamera1 {
 				textureEntry: TextureRegistry.SurfaceTextureEntry,
 				resolution:String,
 				cameraType:String,
-				enableAudio:Boolean ) {
+				enableAudio:Boolean) {
 
 		this.view = view;
 
@@ -79,6 +81,8 @@ class EeCamera1 {
 		this.textureEntry = textureEntry;
 		this.resolution = resolution;
 
+		this.flutterTexture = view.createSurfaceTexture()
+
 		this.enableAudio = enableAudio
 
 		if (cameraType == "front"){
@@ -86,8 +90,6 @@ class EeCamera1 {
 		}else{
 			cameraPosition = Camera.CameraInfo.CAMERA_FACING_BACK
 		}
-
-		//this.textureEntry = this.view?.createSurfaceTexture();
 
 		val orientationEventListener:OrientationEventListener = object :OrientationEventListener(activity.getApplicationContext()) {
 			override fun onOrientationChanged(orientation: Int) {
@@ -114,11 +116,11 @@ class EeCamera1 {
 		}
 	}
 
-	fun ready(callback:()->Unit){
+	override fun ready(callback:()->Unit){
 		callback()
 	}
 
-	fun open(result: Result){
+	override fun open(result: Result){
 		openCamera(result);
 	}
 
@@ -126,9 +128,9 @@ class EeCamera1 {
 
 		try {
 			camera = Camera.open(cameraPosition);
-		}catch (bb:Exception){
+		}catch (e:Exception){
 			isOpen = false
-			bb.printStackTrace()
+			e.printStackTrace()
 			return
 		}
 
@@ -140,7 +142,7 @@ class EeCamera1 {
 
 		val rotate = getOrientation(this.activity, cameraPosition);
 
-		val surfaceTexture = this.textureEntry!!.surfaceTexture()
+		val surfaceTexture = this.flutterTexture!!.surfaceTexture()
 
 		camera!!.setPreviewTexture(surfaceTexture)
 
@@ -160,7 +162,7 @@ class EeCamera1 {
 
 		camera!!.autoFocus(null)
 
-		val reply: MutableMap<String, String> = mutableMapOf("textureId" to this.textureEntry!!.id().toString())
+		val reply: MutableMap<String, String> = mutableMapOf("textureId" to this.flutterTexture!!.id().toString())
 		reply.put("width", previewSize!!.width.toString())
 		reply.put("height", previewSize!!.height.toString())
 		reply.put("status","ok")
@@ -168,7 +170,7 @@ class EeCamera1 {
 		result.success(reply);
 	}
 
-	fun takePhoto(savePath: String, result: Result){
+	override fun takePhoto(savePath: String, result: Result){
 
 		if (!isOpen){
 			result.success("fail")
@@ -195,7 +197,7 @@ class EeCamera1 {
 		this.camera!!.takePicture(null, null, this.takePictureCallback);
 	}
 
-	fun dispose(result: Result){
+	override fun dispose(result: Result){
 		isOpen = false
 		isRecording = false
 
@@ -273,7 +275,7 @@ class EeCamera1 {
 	}
 
 
-	fun startRecord(path: String, result: Result){
+	override fun startRecord(path: String, result: Result){
 		if (!isOpen){
 			result.success("fail")
 			return
@@ -315,7 +317,7 @@ class EeCamera1 {
 		return
 	}
 
-	fun stopRecord(result: Result){
+	override fun stopRecord(result: Result){
 
 		if (!isOpen){
 			result.success("fail")

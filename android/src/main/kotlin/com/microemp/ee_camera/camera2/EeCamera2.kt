@@ -22,12 +22,12 @@ import android.media.ImageReader
 import android.util.Size
 import android.view.OrientationEventListener
 import java.io.FileOutputStream
-import java.io.IOException
 import java.nio.ByteBuffer
 import kotlin.math.round
+import com.microemp.ee_camera.EeCameraInterface
 
 
-class EeCamera2 {
+class EeCamera2 : EeCameraInterface {
 	var view: FlutterView? = null
 	var activity: Activity? = null
 	var registrar: PluginRegistry.Registrar? = null
@@ -84,7 +84,7 @@ class EeCamera2 {
 		this.activity = activity
 		this.registrar = registrar
 		this.textureEntry = textureEntry;
-		this.flutterTexture = textureEntry
+		this.flutterTexture = view.createSurfaceTexture()
 		this.resolution = resolution;
 
 		this.cameraType = cameraType
@@ -123,7 +123,7 @@ class EeCamera2 {
 		}
 	}
 
-	fun ready(callback:()->Unit){
+	override fun ready(callback:()->Unit){
 
 		cameraPermissionContinuation = Runnable {
 			cameraPermissionContinuation = null
@@ -166,8 +166,6 @@ class EeCamera2 {
 			return false
 		}
 	}
-
-
 
 	fun  getProfile(cameraId:Int, type: String):CamcorderProfile {
 
@@ -233,7 +231,7 @@ class EeCamera2 {
 		return cameraAll
 	}
 
-	fun open(result: MethodChannel.Result){
+	override fun open(result: MethodChannel.Result){
 
 		cameraManager = this.activity!!.getSystemService(Context.CAMERA_SERVICE) as CameraManager
 
@@ -255,9 +253,9 @@ class EeCamera2 {
 
 		sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
 
-		println("type1:++"+this.cameraTypes!![this.cameraType]!!.toInt().toString());
-		println("type2:++"+this.cameraTypes!![this.cameraType]!!);
-		println("type3:++"+this.cameraType);
+		//println("type1:++"+this.cameraTypes!![this.cameraType]!!.toInt().toString());
+		//println("type2:++"+this.cameraTypes!![this.cameraType]!!);
+		//println("type3:++"+this.cameraType);
 
 		captureProfile = this.getProfile(this.cameraTypes!![this.cameraType]!!.toInt(), this.resolution)
 		previewProfile = this.getProfile(this.cameraTypes!![this.cameraType]!!.toInt(), "high")
@@ -278,11 +276,15 @@ class EeCamera2 {
 			cameraDevice!!.close()
 		}
 
+		println ("ok1");
+
 		cameraManager?.openCamera(this.cameraTypes!![this.cameraType].toString(), object : CameraDevice.StateCallback() {
 
 			override fun onOpened(device: CameraDevice) {
+				println ("ok2");
 				cameraDevice = device
 				startPreview()
+				println ("ok3");
 				isOpen = true
 
 				val reply: MutableMap<String, String> = mutableMapOf("textureId" to flutterTexture!!.id().toString())
@@ -307,7 +309,7 @@ class EeCamera2 {
 
 	}
 
-	fun takePhoto(savePath: String, result: MethodChannel.Result){
+	override fun takePhoto(savePath: String, result: MethodChannel.Result){
 		if (!isOpen){
 			result.success("fail")
 			return
@@ -379,7 +381,7 @@ class EeCamera2 {
 		}
 	}
 
-	fun dispose(result: MethodChannel.Result){
+	override fun dispose(result: MethodChannel.Result){
 		isOpen = false
 		isRecording = false
 
@@ -397,12 +399,21 @@ class EeCamera2 {
 	private fun startPreview() {
 		if (cameraDevice == null) return
 
+		println("pp1");
+
 		try {
+			println("pp2");
 			cameraCaptureSession?.close()
+			println("pp3");
 			cameraCaptureSession = null
 
+			println("pp4");
+
 			val texture = this.flutterTexture!!.surfaceTexture()
+			println("pp5:"+texture.toString());
 			texture!!.setDefaultBufferSize(previewSize!!.width, previewSize!!.height)
+
+			println("pp6");
 
 			previewRequestBuilder = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
 
@@ -428,7 +439,7 @@ class EeCamera2 {
 
 	}
 
-	fun startRecord(path: String, result: MethodChannel.Result){
+	override fun startRecord(path: String, result: MethodChannel.Result){
 		if (!isOpen){
 			result.success("fail")
 			return
@@ -487,7 +498,7 @@ class EeCamera2 {
 		result.success("ok")
 	}
 
-	fun stopRecord(result: MethodChannel.Result){
+	override fun stopRecord(result: MethodChannel.Result){
 		if (!isOpen){
 			result.success("fail")
 			return

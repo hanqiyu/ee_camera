@@ -21,13 +21,11 @@ class EeCameraPlugin: MethodCallHandler {
 	var activity: Activity? = null
 	var registrar: Registrar? = null
 
-	var cameraType: String = "1"
+	var cameraApi: String = "1"
 
+	var camera : EeCameraInterface ?= null
 
-	var textureEntry: TextureRegistry.SurfaceTextureEntry? = null;
-
-	var camera1: EeCamera1? = null;
-	var camera2: EeCamera2? = null;
+	var textureEntry: TextureRegistry.SurfaceTextureEntry? = null
 
 	var activityLifecycleCallbacks: ActivityLifecycleCallbacks? = null
 
@@ -47,14 +45,14 @@ class EeCameraPlugin: MethodCallHandler {
 
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			this.cameraType = "2"
+			this.cameraApi = "2"
 		}else{
-			this.cameraType = "1"
+			this.cameraApi = "1"
 		}
 
-		//this.cameraType = "2"
+		//this.cameraApi = "2"
 
-		println("cameraType:" + this.cameraType);
+		println("camera api version:" + this.cameraApi);
 
 		this.activityLifecycleCallbacks = object : ActivityLifecycleCallbacks {
 			override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle) {}
@@ -75,9 +73,9 @@ class EeCameraPlugin: MethodCallHandler {
 			override fun onActivityPaused(activity: Activity) {
 				/*
 				if (activity === this@EeCameraPlugin.activity) {
-					if (camera1 != null) {
-						camera1!!.dispose();
-						camera1 = null;
+					if (camera != null) {
+						camera!!.dispose();
+						camera = null;
 					}
 				}
 				*/
@@ -87,9 +85,9 @@ class EeCameraPlugin: MethodCallHandler {
 			override fun onActivityStopped(activity: Activity) {
 				/*
 				if (activity === this@EeCameraPlugin.activity) {
-					if (camera1 != null) {
-						camera1!!.dispose();
-						camera1 = null;
+					if (camera != null) {
+						camera!!.dispose();
+						camera = null;
 					}
 				}
 				*/
@@ -105,18 +103,12 @@ class EeCameraPlugin: MethodCallHandler {
 
 
 	private fun open(result: Result) {
-
-
-		if (this.cameraType == "1"){
-			camera1!!.open(result)
-		}else{
-			camera2!!.open(result)
-		}
+		camera!!.open(result);
 	}
 
 	override fun onMethodCall(call: MethodCall, result: Result) {
 
-		println("flutter methid:"+call.method)
+		println("flutter method:"+call.method)
 
 		if (call.method == "getPlatformVersion") {
 			result.success("Android ${android.os.Build.VERSION.RELEASE}")
@@ -132,56 +124,30 @@ class EeCameraPlugin: MethodCallHandler {
 				enableAudio = true
 			}
 
-			if (this.cameraType == "1") {
-				if (camera1 == null) {
-					camera1 = EeCamera1(this.registrar!!, this.view!!, this.activity!!, this.textureEntry!!, resolution!!, cameraType!!, enableAudio);
-				}
-
-				camera1!!.ready {
-					this.open(result)
+			if (this.cameraApi == "1") {
+				if (camera == null) {
+					camera = EeCamera1(this.registrar!!, this.view!!, this.activity!!, this.textureEntry!!, resolution!!, cameraType!!, enableAudio);
 				}
 			}else{
-				if (camera2 == null) {
-					camera2 = EeCamera2(this.registrar!!, this.view!!, this.activity!!, this.textureEntry!!, resolution!!, cameraType!!, enableAudio);
+				if (camera == null) {
+					camera = EeCamera2(this.registrar!!, this.view!!, this.activity!!, this.textureEntry!!, resolution!!, cameraType!!, enableAudio);
 				}
+			}
 
-				camera2!!.ready {
-					this.open(result)
-				}
+			camera!!.ready {
+				this.open(result)
 			}
 		} else if (call.method == "takePhoto") {
-
 			val savePath: String? = call.argument("path");
-
-			if (this.cameraType == "1") {
-				camera1!!.takePhoto(savePath!!, result)
-			} else {
-				camera2!!.takePhoto(savePath!!, result)
-			}
+			camera!!.takePhoto(savePath!!, result)
 		}else if (call.method == "startRecord") {
-
 			val savePath: String? = call.argument("path");
-
-			if (this.cameraType == "1") {
-				camera1!!.startRecord(savePath!!, result)
-			}else{
-				camera2!!.startRecord(savePath!!, result)
-			}
+			camera!!.startRecord(savePath!!, result)
 		}else if (call.method == "stopRecord") {
-
-			if (this.cameraType == "1") {
-				camera1!!.stopRecord(result)
-			}else{
-				camera2!!.stopRecord(result)
-			}
+			camera!!.stopRecord(result)
 		} else if (call.method == "dispose") {
-			if (this.cameraType == "1") {
-				camera1?.dispose(result)
-				camera1 = null
-			} else {
-				camera2?.dispose(result)
-				camera2 = null
-			}
+			camera!!.dispose(result)
+			camera = null
 
 			if (this.activity != null && this.activityLifecycleCallbacks != null) {
 				this.activity

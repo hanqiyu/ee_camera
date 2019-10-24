@@ -253,10 +253,6 @@ class EeCamera2 : EeCameraInterface {
 
 		sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
 
-		//println("type1:++"+this.cameraTypes!![this.cameraType]!!.toInt().toString());
-		//println("type2:++"+this.cameraTypes!![this.cameraType]!!);
-		//println("type3:++"+this.cameraType);
-
 		captureProfile = this.getProfile(this.cameraTypes!![this.cameraType]!!.toInt(), this.resolution)
 		previewProfile = this.getProfile(this.cameraTypes!![this.cameraType]!!.toInt(), "high")
 
@@ -276,15 +272,11 @@ class EeCamera2 : EeCameraInterface {
 			cameraDevice!!.close()
 		}
 
-		println ("ok1");
-
 		cameraManager?.openCamera(this.cameraTypes!![this.cameraType].toString(), object : CameraDevice.StateCallback() {
 
 			override fun onOpened(device: CameraDevice) {
-				println ("ok2");
 				cameraDevice = device
 				startPreview()
-				println ("ok3");
 				isOpen = true
 
 				val reply: MutableMap<String, String> = mutableMapOf("textureId" to flutterTexture!!.id().toString())
@@ -318,7 +310,7 @@ class EeCamera2 : EeCameraInterface {
 		pictureRecorder!!.setOnImageAvailableListener({ imageReader ->
 			val image = imageReader.acquireLatestImage()
 			val buffer = image.planes[0].buffer
-			println("!!!!!ImageAvailableL");
+
 			writeFile(savePath, buffer)
 		}, null)
 
@@ -339,8 +331,6 @@ class EeCamera2 : EeCameraInterface {
 				}else {
 					reason = "Unknown reason"
 				}
-
-				println("capture failed:" + reason)
 			}
 
 			override fun onCaptureCompleted(session: CameraCaptureSession, request: CaptureRequest, r: TotalCaptureResult) {
@@ -392,28 +382,15 @@ class EeCamera2 : EeCameraInterface {
 		result.success("ok")
 	}
 
-	//fun startPreview(){
-	//	createCameraPreviewSession(CameraDevice.TEMPLATE_PREVIEW, null, pictureRecorder!!.surface)
-	//}
-
 	private fun startPreview() {
 		if (cameraDevice == null) return
 
-		println("pp1");
-
 		try {
-			println("pp2");
 			cameraCaptureSession?.close()
-			println("pp3");
 			cameraCaptureSession = null
 
-			println("pp4");
-
 			val texture = this.flutterTexture!!.surfaceTexture()
-			println("pp5:"+texture.toString());
 			texture!!.setDefaultBufferSize(previewSize!!.width, previewSize!!.height)
-
-			println("pp6");
 
 			previewRequestBuilder = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
 
@@ -430,7 +407,7 @@ class EeCamera2 : EeCameraInterface {
 						}
 
 						override fun onConfigureFailed(session: CameraCaptureSession) {
-							println("!!!!kkk Failed2")
+
 						}
 					}, null)
 		} catch (e: CameraAccessException) {
@@ -450,13 +427,11 @@ class EeCamera2 : EeCameraInterface {
 			return
 		}
 
-		println("start reco")
+		println("start record")
 
 		isRecording = true
 
 		prepareMediaRecorder(path)
-		//createCameraPreviewSession(CameraDevice.TEMPLATE_RECORD, Runnable{ mediaRecorder!!.start() }, mediaRecorder!!.surface)
-
 
 		cameraCaptureSession?.stopRepeating()
 		cameraCaptureSession?.abortCaptures()
@@ -491,7 +466,7 @@ class EeCamera2 : EeCameraInterface {
 					}
 
 					override fun onConfigureFailed(cameraCaptureSession: CameraCaptureSession) {
-						println("!!!!kkk Failed")
+
 					}
 				}, null)
 
@@ -509,7 +484,7 @@ class EeCamera2 : EeCameraInterface {
 			return
 		}
 
-		println("stop reco")
+		println("stop record")
 
 		if (cameraCaptureSession != null) {
 			cameraCaptureSession!!.stopRepeating()

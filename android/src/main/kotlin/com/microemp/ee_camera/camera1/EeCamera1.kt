@@ -267,7 +267,7 @@ class EeCamera1 : EeCameraInterface {
 			// back-facing
 			result = (info.orientation - degrees + 360) % 360
 		}
-		
+
 		return result;
 	}
 

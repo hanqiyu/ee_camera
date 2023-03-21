@@ -15,7 +15,7 @@ dependencies:
   path_provider:
   video_player: ^0.10.2+4
   #camera: 
-  dio: 2.1.13
+  dio: ^5.0.3
 
 dev_dependencies:
   flutter_test:
